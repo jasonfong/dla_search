@@ -1,0 +1,8 @@
+_markerlib
+pip
+setuptools
+easy_install.py
+pkg_resources.py
+IPython
+readline.py
+linkenv
