@@ -1,4 +1,4 @@
-from dla_search.http_helpers import get_url_text
+from dla_search.http_helpers import get_url_text, get_url_json
 from bs4 import BeautifulSoup
 from django.conf import settings
 from datetime import datetime
@@ -57,17 +57,21 @@ class DLAData(object):
             return details_data
  
         print "getting yelp data"
-        yelp_text = get_url_text(yelp_url)
-        yelp_soup = BeautifulSoup(yelp_text)
+        yelp_data = get_url_json(
+            url = 'http://api.yelp.com/v2/business/{}'.format(yelp_url[24:]),
+            oauth1 = settings.YELP,
+        )
 
         details_data['has_yelp'] = True
         details_data['yelp_url'] = yelp_url
-        details_data['yelp_rating'] = float(yelp_soup.select('div.biz-rating meta')[0].attrs['content'])
-        details_data['addr_street'] = yelp_soup.select('address span[itemprop="streetAddress"]')[0].text.strip()
-        details_data['addr_city'] = yelp_soup.select('address span[itemprop="addressLocality"]')[0].text.strip()
-        details_data['addr_state'] = yelp_soup.select('address span[itemprop="addressRegion"]')[0].text.strip()
-        details_data['addr_postal'] = yelp_soup.select('address span[itemprop="postalCode"]')[0].text.strip()
-        details_data['yelp_updated'] = datetime.now()
+        details_data['yelp_rating'] = yelp_data['rating']
+        details_data['addr_street'] = yelp_data['location']['address'][0]
+        details_data['addr_city'] = yelp_data['location']['city']
+        details_data['addr_state'] = yelp_data['location']['state_code']
+        details_data['addr_postal'] = yelp_data['location']['postal_code']
+        details_data['latitude'] = yelp_data['location']['coordinate']['latitude']
+        details_data['longitude'] = yelp_data['location']['coordinate']['longitude']
+        # details_data['yelp_updated'] = datetime.now()
         
         return details_data
 

@@ -3,7 +3,7 @@ import django
 from django.core.cache import cache
 from datetime import datetime
 from dla_search.dla_data import DLAData
-from dla_search.http_helpers import get_url_text, JsonResponse
+from dla_search.http_helpers import get_url_text, get_url_json, JsonResponse
 from dla_search.models import Restaurant
 from datetime import datetime, timedelta
 from django.conf import settings
@@ -56,7 +56,7 @@ def update_yelp(request):
     dla = DLAData()
     yelp_data = dla.get_yelp_data(r.details_path)
 
-    r.populate(**yelp_data)
+    r.populate(yelp_updated=datetime.now(), **yelp_data)
     r.put()
 
     return JsonResponse({
@@ -68,16 +68,23 @@ def update_yelp(request):
 def update_yelp_next_batch(request):
     timenow = datetime.now()
     dla = DLAData()
+    updated_count = 0
 
     names = []
-    for r in Restaurant.query().fetch(limit=settings.YELP_UPDATE_BATCH_SIZE):
-        if r.yelp_updated is None or (timenow - r.yelp_updated > timedelta(seconds=settings.YELP_UPDATE_INTERVAL)):
-            yelp_data = dla.get_yelp_data(r.details_path)
+    for r in Restaurant.query().fetch():
+        try:
+            if r.yelp_updated is None or (timenow - r.yelp_updated > timedelta(seconds=settings.YELP_UPDATE_INTERVAL)):
+                yelp_data = dla.get_yelp_data(r.details_path)
 
-            if (yelp_data['has_yelp']):
-                r.populate(**yelp_data)
-                r.put()
-                names.append(r.name)
+                if (yelp_data['has_yelp']):
+                    r.populate(yelp_updated=datetime.now(), **yelp_data)
+                    r.put()
+                    names.append(r.name)
+                    updated_count += 1
+                    if updated_count >= settings.YELP_UPDATE_BATCH_SIZE:
+                        break
+        except:
+            pass
 
     return JsonResponse({
         "status": "ok",

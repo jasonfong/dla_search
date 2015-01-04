@@ -16,6 +16,8 @@ class Restaurant(ndb.Model):
     addr_city = ndb.StringProperty()
     addr_state = ndb.StringProperty()
     addr_postal = ndb.StringProperty()
+    latitude = ndb.FloatProperty()
+    longitude = ndb.FloatProperty()
     yelp_updated = ndb.DateTimeProperty()
 
     updated = ndb.DateTimeProperty(auto_now=True)

@@ -6,3 +6,4 @@ pkg_resources.py
 IPython
 readline.py
 linkenv
+tests
