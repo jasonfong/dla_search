@@ -5,7 +5,8 @@ from datetime import datetime
 from dla_search.dla_data import DLAData
 from dla_search.http_helpers import get_url_text, JsonResponse
 from dla_search.models import Restaurant
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.conf import settings
 
 
 def home(request):
@@ -18,15 +19,17 @@ def clear_cache(request):
     return http.HttpResponse('Cache cleared')
 
 
-def update_db(request):
+def update_summary_list(request):
     dla = DLAData()
     data = dla.get_summary_list()
+    names =[]
 
     for item in data:
         r = Restaurant.query(Restaurant.name == item.get('name')).get()
 
         if r is None:
             r = Restaurant()
+            r.has_yelp = False
 
         r.populate(
             name = item.get('name'),
@@ -35,11 +38,14 @@ def update_db(request):
             cuisine = item.get('cuisine'),
             neighborhood = item.get('neighborhood'),
             details_path = item.get('details_path'),
-            has_yelp = False,
         )
         r.put()
+        names.append(r.name)
 
-    return JsonResponse(data)
+    return JsonResponse({
+        "status": "ok",
+        "updated": names,
+    })
 
 
 def update_yelp(request):
@@ -50,25 +56,40 @@ def update_yelp(request):
     dla = DLAData()
     yelp_data = dla.get_yelp_data(r.details_path)
 
-    r.populate(
-        has_yelp = True,
-        yelp_url = yelp_data['yelp_url'],
-        yelp_rating = yelp_data['yelp_rating'],
-        addr_street = yelp_data['addr_street'],
-        addr_city = yelp_data['addr_city'],
-        addr_state = yelp_data['addr_state'],
-        addr_postal = yelp_data['addr_postal'],
-        yelp_updated = datetime.now(),
-    )
+    r.populate(**yelp_data)
     r.put()
 
-    return JsonResponse(yelp_data)
+    return JsonResponse({
+        "status": "ok",
+        "yelp_data": yelp_data,
+    })
 
 
+def update_yelp_next_batch(request):
+    timenow = datetime.now()
+    dla = DLAData()
+
+    names = []
+    for r in Restaurant.query().fetch(limit=settings.YELP_UPDATE_BATCH_SIZE):
+        if r.yelp_updated is None or (timenow - r.yelp_updated > timedelta(seconds=settings.YELP_UPDATE_INTERVAL)):
+            yelp_data = dla.get_yelp_data(r.details_path)
+
+            if (yelp_data['has_yelp']):
+                r.populate(**yelp_data)
+                r.put()
+                names.append(r.name)
+
+    return JsonResponse({
+        "status": "ok",
+        "updated": names,
+    })
 
 
+def clear_data(request):
+    for r in Restaurant.query().fetch():
+        r.key.delete()
 
-def dinela_home(request):
-    text = get_url_text('http://www.discoverlosangeles.com/dinela-los-angeles-restaurant-week')
-    return http.HttpResponse(text)
-    
+    return JsonResponse({
+        "status": "ok",
+    })
+

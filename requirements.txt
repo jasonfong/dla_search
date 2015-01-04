@@ -2,3 +2,4 @@ git+https://github.com/ze-phyr-us/linkenv.git
 
 Django
 beautifulsoup4
+oauth2

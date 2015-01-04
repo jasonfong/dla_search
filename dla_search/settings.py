@@ -89,10 +89,13 @@ STATIC_URL = '/static/'
 
 DLA_BASEURL = 'http://www.discoverlosangeles.com'
 
-# Number of items to fetch from restaurants index (minimum 10)
-DLA_INDEX_LIMIT = 10
+# Number of items to fetch from restaurants index (intervals of 10, or ALL)
+DLA_INDEX_LIMIT = 'ALL'
 
 USER_AGENT = "req.add_header('User-agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36')"
+
+YELP_UPDATE_INTERVAL = 86400
+YELP_UPDATE_BATCH_SIZE = 10
 
 try:
     from .local_settings import *

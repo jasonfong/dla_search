@@ -9,7 +9,7 @@ class Restaurant(ndb.Model):
     neighborhood = ndb.StringProperty(required=True)
     details_path = ndb.StringProperty(required=True)
 
-    has_yelp = ndb.BooleanProperty(required=True, default=False)
+    has_yelp = ndb.BooleanProperty(required=True)
     yelp_url = ndb.StringProperty()
     yelp_rating = ndb.FloatProperty()
     addr_street = ndb.StringProperty()

@@ -11,4 +11,4 @@ skip_files:
 
 handlers:
 - url: /.*
-  script: gae_memcache.wsgi.application
+  script: dla_search.wsgi.application
