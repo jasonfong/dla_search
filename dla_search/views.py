@@ -75,14 +75,15 @@ def update_yelp_next_batch(request):
         try:
             if r.yelp_updated is None or (timenow - r.yelp_updated > timedelta(seconds=settings.YELP_UPDATE_INTERVAL)):
                 yelp_data = dla.get_yelp_data(r.details_path)
+                r.populate(yelp_updated=datetime.now(), **yelp_data)
+                r.put()
 
                 if (yelp_data['has_yelp']):
-                    r.populate(yelp_updated=datetime.now(), **yelp_data)
-                    r.put()
                     names.append(r.name)
                     updated_count += 1
                     if updated_count >= settings.YELP_UPDATE_BATCH_SIZE:
                         break
+
         except:
             pass
 

@@ -1,0 +1,4 @@
+cron:
+- description: yelp update check
+  url: /update_yelp_next_batch
+  schedule: every 5 minutes
